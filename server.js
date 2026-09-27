@@ -18,6 +18,9 @@ const SECRET = process.env.JWT_SECRET || 'dev-only-change-this-secret';
 const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || '';
 const MIDTRANS_CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY || '';
 const MIDTRANS_IS_PRODUCTION = String(process.env.MIDTRANS_IS_PRODUCTION || 'false').toLowerCase() === 'true';
+const EMAIL_USER = process.env.EMAIL_USER || '';
+const EMAIL_PASS = process.env.EMAIL_PASS || '';
+const mailer = EMAIL_USER && EMAIL_PASS ? nodemailer.createTransport({service:'gmail',auth:{user:EMAIL_USER,pass:EMAIL_PASS}}) : null;
 
 const snap = MIDTRANS_SERVER_KEY
   ? new midtransClient.Snap({
@@ -75,8 +78,13 @@ CREATE TABLE IF NOT EXISTS order_items(
 `);
 
 
+try { db.exec("ALTER TABLE users ADD COLUMN reset_code TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE users ADD COLUMN reset_expires INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN image TEXT DEFAULT ''"); } catch {}
 
+try { db.exec("ALTER TABLE orders ADD COLUMN promo_code TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN discount INTEGER NOT NULL DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN subtotal INTEGER NOT NULL DEFAULT 0"); } catch {}
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@dalvora.id';
 const adminPass = process.env.ADMIN_PASSWORD || 'ganti-password-ini';
 const exists = db.prepare('SELECT id FROM users WHERE email=?').get(adminEmail);
@@ -126,43 +134,132 @@ app.post('/api/register',(req,res)=>{
 app.post('/api/login',(req,res)=>{
   const {email,password}=req.body;
   const u=db.prepare('SELECT * FROM users WHERE email=?').get((email||'').toLowerCase());
-  if(!u||!bcrypt.compareSync(password||'',u.password)) return res.status(401).json({error:'Email atau password salah'});
+  if(!u||!bcrypt.compareSync(password||'',u.password))
+    return res.status(401).json({error:'Email atau password salah'});
   const safe={id:u.id,name:u.name,email:u.email,role:u.role};
   res.json({user:safe,token:token(safe)});
 });
 
-app.post('/api/orders',auth,async(req,res)=>{
-  const {name,phone,address,payment_method,items}=req.body;
-  if(!name||!phone||!address||!Array.isArray(items)||!items.length)
-    return res.status(400).json({error:'Data pesanan belum lengkap'});
+app.post("/api/forgot-password",async(req,res)=>{
+  try{
+    const email=String(req.body?.email||"").trim().toLowerCase();
+    if(!email) return res.status(400).json({error:"Email wajib diisi"});
 
-  let total=0;
-  const clean=[];
+    const u=db.prepare("SELECT id,name,email FROM users WHERE email=?").get(email);
+    if(!u) return res.status(404).json({error:"Email tidak terdaftar"});
 
-  for(const x of items){
-    const p=db.prepare('SELECT * FROM products WHERE id=? AND active=1').get(x.product_id);
-    const qty=Math.max(1,Math.min(99,Number(x.qty)||1));
-    if(!p) return res.status(400).json({error:'Produk tidak ditemukan'});
-    total+=p.price*qty;
-    clean.push({p,qty});
+    if(!mailer) return res.status(500).json({error:"Email belum dikonfigurasi"});
+
+    const code=String(Math.floor(100000+Math.random()*900000));
+    db.prepare("UPDATE users SET reset_code=?, reset_expires=? WHERE id=?")
+      .run(code,Date.now()+10*60*1000,u.id);
+
+    await mailer.sendMail({
+      from:EMAIL_USER,
+      to:u.email,
+      subject:"Kode Reset Password DALVORA",
+      text:`Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
+    });
+
+    res.json({ok:true});
+  }catch(e){
+    console.error("FORGOT PASSWORD ERROR:",e?.message||e);
+    res.status(500).json({error:"Gagal mengirim kode reset"});
   }
+});
 
-  const orderNo='DV'+Date.now().toString().slice(-8);
+app.post("/api/reset-password",(req,res)=>{
+  try{
+    const email=String(req.body?.email||"").trim().toLowerCase();
+    const code=String(req.body?.code||"").trim();
+    const password=String(req.body?.password||"");
 
-  const tx=db.transaction(()=>{
-    const r=db.prepare(`
-      INSERT INTO orders(
-        order_no,user_id,customer_name,phone,address,payment_method,total
-      ) VALUES(?,?,?,?,?,?,?)
-    `).run(
-      orderNo,
-      req.user.id,
-      name,
-      phone,
-      address,
-      payment_method||'QRIS',
-      total
-    );
+    if(!email||!code||password.length<6)
+      return res.status(400).json({error:"Email, kode, dan password minimal 6 karakter wajib diisi"});
+
+    const u=db.prepare(
+      "SELECT id FROM users WHERE email=? AND reset_code=? AND reset_expires>?"
+    ).get(email,code,Date.now());
+
+    if(!u)
+      return res.status(400).json({error:"Kode reset salah atau sudah kedaluwarsa"});
+
+    const hash=bcrypt.hashSync(password,10);
+
+    db.prepare(
+      "UPDATE users SET password=?,reset_code='',reset_expires=0 WHERE id=?"
+    ).run(hash,u.id);
+
+    res.json({ok:true});
+  }catch(e){
+    console.error("RESET PASSWORD ERROR:",e?.message||e);
+    res.status(500).json({error:"Gagal mengubah password"});
+  }
+});
+
+app.post('/api/orders',auth,async(req,res)=>{
+    const {name,phone,address,payment_method,items,promo_code}=req.body;
+
+    if(!name||!phone||!address||!Array.isArray(items)||!items.length)
+      return res.status(400).json({error:'Data pesanan belum lengkap'});
+
+    let subtotal=0;
+    const clean=[];
+
+    for(const x of items){
+      const p=db.prepare('SELECT * FROM products WHERE id=? AND active=1').get(x.product_id);
+      const qty=Math.max(1,Math.min(99,Number(x.qty)||1));
+
+      if(!p)
+        return res.status(400).json({error:'Produk tidak ditemukan'});
+
+      subtotal+=p.price*qty;
+      clean.push({p,qty});
+    }
+
+    let promoCode=String(promo_code||'').trim().toUpperCase();
+    let discount=0;
+
+    if(promoCode){
+      const promo=db.prepare('SELECT * FROM promos WHERE code=? AND active=1').get(promoCode);
+
+      if(!promo)
+        return res.status(400).json({error:'Kode promo tidak ditemukan atau tidak aktif'});
+
+      if(promo.expires_at && Date.now()>Date.parse(promo.expires_at))
+        return res.status(400).json({error:'Kode promo sudah kedaluwarsa'});
+
+      if(promo.type==='percent'){
+        discount=Math.round(subtotal*(Number(promo.value)||0)/100);
+      }else{
+        discount=Number(promo.value)||0;
+      }
+
+      discount=Math.max(0,Math.min(discount,subtotal));
+    }
+
+    const total=Math.max(0,subtotal-discount);
+
+    const orderNo='DV'+Date.now().toString().slice(-8);
+
+    const tx=db.transaction(()=>{
+      const r=db.prepare(`
+        INSERT INTO orders(
+          order_no,user_id,customer_name,phone,address,payment_method,
+          subtotal,promo_code,discount,total
+        ) VALUES(?,?,?,?,?,?,?,?,?,?)
+      `).run(
+        orderNo,
+        req.user.id,
+        name,
+        phone,
+        address,
+        payment_method||'QRIS',
+        subtotal,
+        promoCode,
+        discount,
+        total
+      );
 
     const add=db.prepare(`
       INSERT INTO order_items(order_id,product_id,name,price,qty)
@@ -209,12 +306,20 @@ const mr=await fetch(base+'/v2/charge',{
       order_id:orderNo,
       gross_amount:total
     },
-    item_details:clean.map(x=>({
-      id:String(x.p.id),
-      price:x.p.price,
-      quantity:x.qty,
-      name:x.p.name
-    })),
+    item_details:[
+      ...clean.map(x=>({
+        id:String(x.p.id),
+        price:x.p.price,
+        quantity:x.qty,
+        name:x.p.name
+      })),
+      ...(discount>0 ? [{
+        id:'PROMO-'+(promoCode||'DISCOUNT'),
+        price:-discount,
+        quantity:1,
+        name:'Diskon '+(promoCode||'Promo')
+      }] : [])
+    ],
     customer_details:{
       first_name:name,
       email:req.user.email,
@@ -430,6 +535,66 @@ app.patch('/api/admin/products/:id',auth,admin,(req,res)=>{
 
 app.delete('/api/admin/products/:id',auth,admin,(req,res)=>{
   db.prepare('UPDATE products SET active=0 WHERE id=?').run(req.params.id); res.json({ok:true});
+});
+
+
+app.get('/api/admin/promos',auth,admin,(req,res)=>{
+  const promos=db.prepare('SELECT * FROM promos ORDER BY id DESC').all();
+  res.json(promos);
+});
+
+app.post('/api/admin/promos',auth,admin,(req,res)=>{
+  const code=String(req.body?.code||'').trim().toUpperCase();
+  const type=String(req.body?.type||'percent');
+  const value=Number(req.body?.value);
+  const expires_at=String(req.body?.expires_at||'').trim();
+
+  if(!code) return res.status(400).json({error:'Kode promo wajib diisi'});
+  if(!['percent','fixed'].includes(type)) return res.status(400).json({error:'Tipe promo tidak valid'});
+  if(!Number.isFinite(value)||value<=0) return res.status(400).json({error:'Nilai promo harus lebih dari 0'});
+  if(type==='percent'&&value>100) return res.status(400).json({error:'Diskon persen maksimal 100%'});
+
+  try{
+    const r=db.prepare('INSERT INTO promos(code,type,value,active,expires_at) VALUES(?,?,?,?,?)')
+      .run(code,type,Math.floor(value),1,expires_at);
+    res.json({ok:true,id:r.lastInsertRowid});
+  }catch(e){
+    res.status(409).json({error:e?.message||'Kode promo sudah ada'});
+  }
+});
+
+app.patch('/api/admin/promos/:id',auth,admin,(req,res)=>{
+  const {active}=req.body||{};
+  if(active===undefined) return res.status(400).json({error:'Status wajib diisi'});
+  db.prepare('UPDATE promos SET active=? WHERE id=?').run(Number(active)?1:0,req.params.id);
+  res.json({ok:true});
+});
+
+app.delete('/api/admin/promos/:id',auth,admin,(req,res)=>{
+  db.prepare('DELETE FROM promos WHERE id=?').run(req.params.id);
+  res.json({ok:true});
+});
+
+app.post('/api/promo/check',(req,res)=>{
+  const code=String(req.body?.code||'').trim().toUpperCase();
+  if(!code) return res.status(400).json({error:'Kode promo wajib diisi'});
+
+  const promo=db.prepare('SELECT * FROM promos WHERE code=? AND active=1').get(code);
+  if(!promo) return res.status(404).json({error:'Kode promo tidak ditemukan atau tidak aktif'});
+
+  if(promo.expires_at && Date.now()>Date.parse(promo.expires_at))
+    return res.status(400).json({error:'Kode promo sudah kedaluwarsa'});
+
+  res.json({
+    ok:true,
+    promo:{
+      id:promo.id,
+      code:promo.code,
+      type:promo.type,
+      value:promo.value,
+      expires_at:promo.expires_at
+    }
+  });
 });
 
 app.get('/api/admin/stats',auth,admin,(req,res)=>{
