@@ -1,0 +1,7 @@
+.env
+.env.backup
+node_modules/
+dalvora.db
+dalvora.log
+*.bak
+*.backup*

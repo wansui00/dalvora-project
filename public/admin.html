@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DALVORA Admin</title>
+<style>
+body{font-family:system-ui;margin:0;background:#fff8ef;color:#241812}.wrap{max-width:1100px;margin:auto;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{background:white;border:1px solid #eaded3;border-radius:15px;padding:18px;margin:10px 0}
+.btn{background:#5b3928;color:white;border:0;border-radius:9px;padding:10px;font-weight:800;cursor:pointer}.btn.secondary{background:#7d6a5e}
+.form{display:grid;gap:8px}.form input,.form textarea{padding:11px;border:1px solid #eaded3;border-radius:8px;font:inherit}.products{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.thumb{width:90px;height:90px;object-fit:cover;border-radius:12px;background:#f8dfcc}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1e3d7;font-weight:800}.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:700px){.grid,.products{grid-template-columns:1fr}}
+</style></head>
+<body><div class="wrap">
+<h1>DALVORA Admin</h1><p>Kelola menu, pesanan, dan penjualan.</p>
+<div id="stats" class="grid"></div>
+<h2>Pesanan</h2><div id="orders"></div>
+<h2>Menu</h2><div id="products" class="products"></div>
+<h2>Tambah Menu</h2>
+<div class="card form">
+<input id="pn" placeholder="Nama menu"><input id="pp" type="text" inputmode="numeric" placeholder="Harga (contoh: 10.000)">
+<textarea id="pd" placeholder="Deskripsi"></textarea><input id="pe" placeholder="Emoji fallback, contoh 🍹">
+<input id="ps" type="number" value="999" placeholder="Stok">
+<label>Foto/logo menu <input id="pi" type="file" accept="image/*"></label>
+<button class="btn" onclick="addProduct()">Tambah Menu</button>
+</div></div>
+<script>
+let t=localStorage.dv_token||'';
+const $=id=>document.getElementById(id);
+const money=n=>'Rp'+Number(n||0).toLocaleString('id-ID');
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+async function api(u,o={}){o.headers={...(o.headers||{}),Authorization:'Bearer '+t,'Content-Type':'application/json'};let r=await fetch(u,o);let d=await r.json().catch(()=>({}));if(r.status===401||r.status===403){alert('Login admin terlebih dahulu.');location.href='/';return null}if(!r.ok)throw new Error(d.error||'Request gagal');return d}
+function imageData(file){return new Promise((resolve,reject)=>{if(!file)return resolve('');const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const max=900,scale=Math.min(1,max/img.width,max/img.height),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.8))};img.onerror=reject;img.src=rd.result};rd.onerror=reject;rd.readAsDataURL(file)})}
+const statusLabel=s=>({new:'Belum terkirim',processing:'Sedang diproses',shipped:'Sudah terkirim',completed:'Sudah terkirim',cancelled:'Dibatalkan'}[s]||s);
+async function load(){
+ try{
+  const [s,o,p]=await Promise.all([api('/api/admin/stats'),api('/api/admin/orders'),api('/api/products')]);
+  if(!s)return;
+  $('stats').innerHTML=`<div class="card"><b>Omzet dibayar</b><h2>${money(s.revenue)}</h2></div><div class="card"><b>Total pesanan</b><h2>${s.orders}</h2></div><div class="card"><b>Pelanggan</b><h2>${s.customers}</h2></div>`;
+  $('orders').innerHTML=o.length?o.map(x=>`<div class="card"><div class="row"><b>${esc(x.order_no)}</b><span class="badge">${statusLabel(x.order_status)}</span></div><p>${esc(x.customer_name)} · ${esc(x.phone)}<br>${esc(x.address)}<br>${money(x.total)} · ${x.payment_status==='paid'?'💳 SUDAH DIBAYAR':'💳 BELUM DIBAYAR'}</p><div>${(x.items||[]).map(i=>`<div>${esc(i.name)} × ${i.qty} — ${money(i.price*i.qty)}</div>`).join('')}</div><p><button class="btn" onclick="status(${x.id},'processing')">Proses</button> <button class="btn" onclick="status(${x.id},'shipped')">Sudah terkirim</button> <button class="btn secondary" onclick="payment(${x.id})">Tandai dibayar</button></p></div>`).join(''):'<p>Belum ada pesanan.</p>';
+  $('products').innerHTML=p.map(x=>`<div class="card"><div class="row"><div>${x.image?`<img class="thumb" src="${esc(x.image)}">`:`<div class="thumb" style="display:grid;place-items:center;font-size:42px">${esc(x.emoji)}</div>`}</div><div style="flex:1"><h3>${esc(x.name)}</h3><b>${money(x.price)}</b><p>${esc(x.description)}</p><small>Stok: ${x.stock}</small></div></div><p><button class="btn" onclick="editProduct(${x.id})">Edit</button> <button class="btn secondary" onclick="delProduct(${x.id})">Hapus</button></p></div>`).join('');
+ }catch(e){alert(e.message)}
+}
+async function status(id,s){try{await api('/api/admin/orders/'+id,{method:'PATCH',body:JSON.stringify({order_status:s})});load()}catch(e){alert(e.message)}}
+async function payment(id){try{await api('/api/admin/orders/'+id,{method:'PATCH',body:JSON.stringify({payment_status:'paid'})});load()}catch(e){alert(e.message)}}
+async function addProduct(){
+ try{const image=await imageData($('pi').files[0]);await api('/api/admin/products',{method:'POST',body:JSON.stringify({name:$('pn').value,price:Number($('pp').value.replace(/\./g,'')),description:$('pd').value,emoji:$('pe').value||'🥤',stock:Number($('ps').value)||999,image})});['pn','pp','pd','pe','ps'].forEach(id=>$(id).value='');$('ps').value='999';$('pi').value='';load();alert('Menu berhasil ditambahkan')}catch(e){alert(e.message)}
+}
+async function editProduct(id){
+ const p=(await api('/api/products')).find(x=>x.id===id);if(!p)return;
+ const name=prompt('Nama menu',p.name);if(name===null)return;
+ const price=prompt('Harga',p.price);if(price===null)return;
+ const description=prompt('Deskripsi',p.description||'');if(description===null)return;
+ const emoji=prompt('Emoji fallback',p.emoji||'🥤');if(emoji===null)return;
+ try{await api('/api/admin/products/'+id,{method:'PATCH',body:JSON.stringify({name,price:Number(String(price).replace(/\./g,'')),description,emoji})});load();alert('Menu berhasil diubah')}catch(e){alert(e.message)}
+}
+async function delProduct(id){if(!confirm('Hapus menu ini dari katalog?'))return;try{await api('/api/admin/products/'+id,{method:'DELETE'});load()}catch(e){alert(e.message)}}
+load();
+</script></body></html>
