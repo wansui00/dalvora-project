@@ -12,7 +12,7 @@ body{font-family:system-ui;margin:0;background:#fff8ef;color:#241812}.wrap{max-w
 <body><div class="wrap">
 <h1>DALVORA Admin</h1><p>Kelola menu, pesanan, dan penjualan.</p>
 <div id="stats" class="grid"></div>
-<h2>Pesanan</h2><div id="orders"></div>
+<h2>Promo / Diskon</h2><div class="card"><div class="form"><input id="promoCode" placeholder="Kode promo, contoh DALVORA10"><select id="promoType"><option value="percent">Persentase (%)</option><option value="fixed">Potongan nominal (Rp)</option></select><input id="promoValue" type="number" min="1" placeholder="Nilai diskon"><input id="promoExpires" type="datetime-local"><button class="btn" onclick="addPromo()">Tambah Promo</button></div></div><div id="promos"></div><h2>Pesanan</h2><div id="orders"></div>
 <h2>Menu</h2><div id="products" class="products"></div>
 <h2>Tambah Menu</h2>
 <div class="card form">
@@ -30,16 +30,89 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 async function api(u,o={}){o.headers={...(o.headers||{}),Authorization:'Bearer '+t,'Content-Type':'application/json'};let r=await fetch(u,o);let d=await r.json().catch(()=>({}));if(r.status===401||r.status===403){alert('Login admin terlebih dahulu.');location.href='/';return null}if(!r.ok)throw new Error(d.error||'Request gagal');return d}
 function imageData(file){return new Promise((resolve,reject)=>{if(!file)return resolve('');const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const max=900,scale=Math.min(1,max/img.width,max/img.height),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.8))};img.onerror=reject;img.src=rd.result};rd.onerror=reject;rd.readAsDataURL(file)})}
 const statusLabel=s=>({new:'Belum terkirim',processing:'Sedang diproses',shipped:'Sudah terkirim',completed:'Sudah terkirim',cancelled:'Dibatalkan'}[s]||s);
+async function loadPromos(){try{const promos=await api("/api/admin/promos");$("promos").innerHTML=promos.length?promos.map(p=>`<div class="card"><div class="row"><b>${esc(p.code)}</b><span class="badge">${p.active?"AKTIF":"NONAKTIF"}</span></div><p>${p.type==="percent"?p.value+"%":"Rp "+Number(p.value).toLocaleString("id-ID")}</p><button class="btn secondary" onclick="togglePromo(${p.id},${p.active?0:1})">${p.active?"Nonaktifkan":"Aktifkan"}</button> <button class="btn" onclick="deletePromo(${p.id})">Hapus</button></div>`).join(""):"<p>Belum ada promo.</p>"}catch(e){$("promos").innerHTML="<p>Gagal memuat promo.</p>"}}; async function addPromo(){const code=$("promoCode").value.trim().toUpperCase(),type=$("promoType").value,value=Number($("promoValue").value),expires=$("promoExpires").value;if(!code||!value||value<=0)return alert("Kode dan nilai promo wajib diisi");if(type==="percent"&&value>100)return alert("Diskon maksimal 100%");try{await api("/api/admin/promos",{method:"POST",body:JSON.stringify({code,type,value,expires_at:expires?new Date(expires).toISOString():""})});$("promoCode").value="";$("promoValue").value="";$("promoExpires").value="";await loadPromos();alert("Promo berhasil dibuat")}catch(e){alert(e.message)}} async function togglePromo(id,active){try{await api("/api/admin/promos/"+id,{method:"PATCH",body:JSON.stringify({active})});loadPromos()}catch(e){alert(e.message)}} async function deletePromo(id){if(!confirm("Hapus promo ini?"))return;try{await api("/api/admin/promos/"+id,{method:"DELETE"});loadPromos()}catch(e){alert(e.message)}}
+
 async function load(){
  try{
   const [s,o,p]=await Promise.all([api('/api/admin/stats'),api('/api/admin/orders'),api('/api/products')]);
   if(!s)return;
   $('stats').innerHTML=`<div class="card"><b>Omzet dibayar</b><h2>${money(s.revenue)}</h2></div><div class="card"><b>Total pesanan</b><h2>${s.orders}</h2></div><div class="card"><b>Pelanggan</b><h2>${s.customers}</h2></div>`;
-  $('orders').innerHTML=o.length?o.map(x=>`<div class="card"><div class="row"><b>${esc(x.order_no)}</b><span class="badge">${statusLabel(x.order_status)}</span></div><p>${esc(x.customer_name)} · ${esc(x.phone)}<br>${esc(x.address)}<br>${money(x.total)} · ${x.payment_status==='paid'?'💳 SUDAH DIBAYAR':'💳 BELUM DIBAYAR'}</p><div>${(x.items||[]).map(i=>`<div>${esc(i.name)} × ${i.qty} — ${money(i.price*i.qty)}</div>`).join('')}</div><p><button class="btn" onclick="status(${x.id},'processing')">Proses</button> <button class="btn" onclick="status(${x.id},'shipped')">Sudah terkirim</button> <button class="btn secondary" onclick="payment(${x.id})">Tandai dibayar</button></p></div>`).join(''):'<p>Belum ada pesanan.</p>';
+  $('orders').innerHTML=o.length?o.map(x=>`<div class="card"><div class="row"><b>${esc(x.order_no)}</b><span class="badge">${statusLabel(x.order_status)}</span></div><p>
+${esc(x.customer_name)} · ${esc(x.phone)}<br>
+${esc(x.address)}<br>
+<span style="display:inline-block;margin-top:6px;">Subtotal: <b>${money(x.subtotal||0)}</b></span><br>
+${x.promo_code?'<span style="display:inline-block;">Promo: <b>'+esc(x.promo_code)+'</b></span><br>':''}
+<span style="display:inline-block;">Diskon: <b>- ${money(x.discount||0)}</b></span><br>
+<span style="display:inline-block;font-size:18px;margin-top:4px;">Total: <b>${money(x.total)}</b></span>
+ · ${x.payment_status==='paid'?'💳 SUDAH DIBAYAR':'💳 BELUM DIBAYAR'}
+</p><div>${(x.items||[]).map(i=>`<div>${esc(i.name)} × ${i.qty} — ${money(i.price*i.qty)}</div>`).join('')}</div><p><button class="btn" onclick="status(${x.id},'processing')">Proses</button> <button class="btn" onclick="status(${x.id},'shipped')">Sudah terkirim</button> <button class="btn secondary" onclick="payment(${x.id})">Tandai dibayar</button> <button class="btn" onclick='printReceipt(${JSON.stringify(x)})'>🧾 Cetak Struk</button></p></div>`).join(''):'<p>Belum ada pesanan.</p>';
   $('products').innerHTML=p.map(x=>`<div class="card"><div class="row"><div>${x.image?`<img class="thumb" src="${esc(x.image)}">`:`<div class="thumb" style="display:grid;place-items:center;font-size:42px">${esc(x.emoji)}</div>`}</div><div style="flex:1"><h3>${esc(x.name)}</h3><b>${money(x.price)}</b><p>${esc(x.description)}</p><small>Stok: ${x.stock}</small></div></div><p><button class="btn" onclick="editProduct(${x.id})">Edit</button> <button class="btn secondary" onclick="delProduct(${x.id})">Hapus</button></p></div>`).join('');
  }catch(e){alert(e.message)}
 }
 async function status(id,s){try{await api('/api/admin/orders/'+id,{method:'PATCH',body:JSON.stringify({order_status:s})});load()}catch(e){alert(e.message)}}
+function printReceipt(o){
+  const items=(o.items||[]).map(i=>`
+    <tr>
+      <td>${esc(i.name)}</td>
+      <td style="text-align:center">${i.qty}</td>
+      <td style="text-align:right">${money(i.price*i.qty)}</td>
+    </tr>`).join('');
+
+  const w=window.open('','_blank','width=400,height=700');
+  if(!w){alert('Izinkan pop-up browser untuk mencetak struk');return}
+
+  w.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Struk ${esc(o.order_no)}</title>
+<style>
+body{font-family:Arial,sans-serif;width:300px;margin:20px auto;color:#111}
+h2{text-align:center;margin:0 0 4px}
+.center{text-align:center}
+.line{border-top:1px dashed #000;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:4px 0;vertical-align:top}
+.total{font-size:17px;font-weight:bold}
+@media print{body{margin:0 auto}}
+</style>
+</head>
+<body>
+<h2>DALVORA</h2>
+<div class="center">MORE THAN JUST A DRINK</div>
+<div class="line"></div>
+
+<b>No. Pesanan:</b> ${esc(o.order_no)}<br>
+<b>Nama:</b> ${esc(o.customer_name)}<br>
+<b>HP:</b> ${esc(o.phone)}<br>
+<b>Alamat:</b> ${esc(o.address)}<br>
+
+<div class="line"></div>
+<table>
+${items}
+</table>
+
+<div class="line"></div>
+<div>Subtotal: ${money(o.subtotal||0)}</div>
+${o.promo_code?`<div>Promo: ${esc(o.promo_code)}</div>`:''}
+${Number(o.discount||0)>0?`<div>Diskon: -${money(o.discount||0)}</div>`:''}
+<div class="line"></div>
+<div class="total">TOTAL: ${money(o.total)}</div>
+<div>Pembayaran: ${o.payment_status==='paid'?'SUDAH DIBAYAR':'BELUM DIBAYAR'}</div>
+<div>Status: ${statusLabel(o.order_status)}</div>
+
+<div class="line"></div>
+<div class="center">Terima kasih telah memesan di DALVORA</div>
+
+<script>
+setTimeout(()=>window.print(),300);
+<\/script>
+</body>
+</html>`);
+
+  w.document.close();
+}
+
 async function payment(id){try{await api('/api/admin/orders/'+id,{method:'PATCH',body:JSON.stringify({payment_status:'paid'})});load()}catch(e){alert(e.message)}}
 async function addProduct(){
  try{const image=await imageData($('pi').files[0]);await api('/api/admin/products',{method:'POST',body:JSON.stringify({name:$('pn').value,price:Number($('pp').value.replace(/\./g,'')),description:$('pd').value,emoji:$('pe').value||'🥤',stock:Number($('ps').value)||999,image})});['pn','pp','pd','pe','ps'].forEach(id=>$(id).value='');$('ps').value='999';$('pi').value='';load();alert('Menu berhasil ditambahkan')}catch(e){alert(e.message)}
@@ -54,4 +127,5 @@ async function editProduct(id){
 }
 async function delProduct(id){if(!confirm('Hapus menu ini dari katalog?'))return;try{await api('/api/admin/products/'+id,{method:'DELETE'});load()}catch(e){alert(e.message)}}
 load();
+loadPromos();
 </script></body></html>
