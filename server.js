@@ -31,6 +31,8 @@ const snap = MIDTRANS_SERVER_KEY
   : null;
 
 app.use(cors());
+
+db.exec("CREATE TABLE IF NOT EXISTS promos (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, type TEXT NOT NULL, value INTEGER NOT NULL, active INTEGER NOT NULL DEFAULT 1, expires_at TEXT DEFAULT '')");
 app.use(express.json({limit:'6mb'}));
 app.use(express.static(path.join(__dirname, 'public')));
 
