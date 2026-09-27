@@ -120,7 +120,7 @@ app.post('/api/register',(req,res)=>{
     const r=db.prepare('INSERT INTO users(name,email,password) VALUES(?,?,?)').run(name,email.toLowerCase(),hash);
     const u=db.prepare('SELECT id,name,email,role FROM users WHERE id=?').get(r.lastInsertRowid);
     res.json({user:u,token:token(u)});
-  }catch(e){res.status(409).json({error:'Email sudah digunakan'});}
+  }catch(e){console.error('REGISTER ERROR:',e);res.status(409).json({error:e?.message||'Pendaftaran gagal'});}
 });
 
 app.post('/api/login',(req,res)=>{
