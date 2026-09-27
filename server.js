@@ -33,6 +33,7 @@ const snap = MIDTRANS_SERVER_KEY
 app.use(cors());
 
 db.exec("CREATE TABLE IF NOT EXISTS promos (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, type TEXT NOT NULL, value INTEGER NOT NULL, active INTEGER NOT NULL DEFAULT 1, expires_at TEXT DEFAULT '')");
+console.log('PROMO TABLE CHECK:', db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='promos'").get());
 app.use(express.json({limit:'6mb'}));
 app.use(express.static(path.join(__dirname, 'public')));
 
