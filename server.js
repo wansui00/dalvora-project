@@ -301,7 +301,7 @@ const mr=await fetch(base+'/v2/charge',{
     Authorization:'Basic '+auth
   },
   body:JSON.stringify({
-    payment_type:'gopay',
+    payment_type:'qris',
     transaction_details:{
       order_id:orderNo,
       gross_amount:total
