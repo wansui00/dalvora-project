@@ -409,7 +409,20 @@ async function order(){
 
             <p class="muted">
                 Scan QR di aplikasi GoPay atau aplikasi pembayaran lainnya
-            </p>
+            </p><div style="margin:18px 0;padding:15px;background:#eef5ff;border-radius:12px;text-align:left;">
+    <b>🔗 Link Pembayaran (Sandbox)</b><br>
+    <a
+        href="${d.payment.redirect_url||'#'}"
+        target="_blank"
+        style="word-break:break-all;"
+    >${d.payment.redirect_url||'Link pembayaran tidak tersedia'}</a>
+    <br><br>
+    <button
+        type="button"
+        class="btn"
+        onclick="navigator.clipboard.writeText('${d.payment.redirect_url||''}').then(()=>alert('Link berhasil disalin'))"
+    >Salin Link</button>
+</div>
 
 
             <button
