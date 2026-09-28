@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS order_items(
  price INTEGER NOT NULL,
  qty INTEGER NOT NULL
 );
-
+`);
 
 
 try { db.exec("ALTER TABLE users ADD COLUMN reset_code TEXT DEFAULT ''"); } catch {}
