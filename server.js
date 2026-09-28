@@ -70,6 +70,15 @@ CREATE TABLE IF NOT EXISTS orders(
  total INTEGER NOT NULL,
  created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS promos(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT UNIQUE NOT NULL,
+  type TEXT NOT NULL DEFAULT 'percent',
+  value INTEGER NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  expires_at TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE IF NOT EXISTS order_items(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  order_id INTEGER NOT NULL,
@@ -304,7 +313,7 @@ const mr=await fetch(base+'/v2/charge',{
     Authorization:'Basic '+auth
   },
   body:JSON.stringify({
-    payment_type:'gopay',
+    payment_type:'qris',
     transaction_details:{
       order_id:orderNo,
       gross_amount:total
