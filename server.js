@@ -365,6 +365,7 @@ const qr_url=qrAction.url;
 const redirect_url=redirectAction?.url||null;
 
 console.log("MIDTRANS RESULT:", JSON.stringify({order_no:orderNo, qr_url:qr_url ? "[ADA]" : "[KOSONG]", redirect_url:redirect_url ? "[ADA]" : "[KOSONG]", payment_method:'gopay'}));
+      console.log("MIDTRANS ACTIONS:", JSON.stringify((result.actions||[]).map(x=>({name:x.name,url:x.url||null}))));
 
       return res.json({
         order_id:id,
