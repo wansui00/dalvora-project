@@ -329,7 +329,8 @@ const mr=await fetch(base+'/v2/charge',{
       phone
     },
     gopay:{
-      enable_callback:false
+      enable_callback:true,
+callback_url:'https://dalvora-project-production.up.railway.app/'
     }
   })
 });
