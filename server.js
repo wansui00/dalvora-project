@@ -374,6 +374,7 @@ if(!qrAction){
 const qr_url=qrAction.url;
 const redirect_url =
   redirectAction?.url ||
+  qr_url ||
   (result.token
     ? `${MIDTRANS_IS_PRODUCTION
         ? 'https://app.midtrans.com'
