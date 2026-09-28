@@ -362,8 +362,13 @@ if(!qrAction){
 }
 
 const qr_url=qrAction.url;
-const redirect_url=redirectAction?.url||null;
-
+const redirect_url =
+  redirectAction?.url ||
+  (result.token
+    ? `${MIDTRANS_IS_PRODUCTION
+        ? 'https://app.midtrans.com'
+        : 'https://app.sandbox.midtrans.com'}/snap/v2/vtweb/${result.token}`
+    : null);
 console.log("MIDTRANS RESULT:", JSON.stringify({order_no:orderNo, qr_url:qr_url ? "[ADA]" : "[KOSONG]", redirect_url:redirect_url ? "[ADA]" : "[KOSONG]", payment_method:'gopay'}));
       console.log("MIDTRANS ACTIONS:", JSON.stringify((result.actions||[]).map(x=>({name:x.name,url:x.url||null}))));
 
