@@ -489,6 +489,29 @@ app.get('/api/my-orders',auth,(req,res)=>{
   res.json(orders.map(o=>({...o,items:items.all(o.id)})));
 });
 
+app.get('/api/midtrans/status/:orderNo',auth,async(req,res)=>{
+  try{
+    if(!snap) return res.status(500).json({error:'Midtrans belum dikonfigurasi'});
+
+    const orderNo=req.params.orderNo;
+    const data=await snap.transaction.status(orderNo);
+    let paymentStatus="pending";
+    if(data.transaction_status==="settlement" || (data.transaction_status==="capture" && data.fraud_status==="accept")) paymentStatus="paid";
+    else if(data.transaction_status==="expire" || data.transaction_status==="cancel" || data.transaction_status==="deny") paymentStatus="failed";
+    db.prepare("UPDATE orders SET payment_status=? WHERE order_no=?").run(paymentStatus,orderNo);
+
+    res.json({
+      order_id:data.order_id,
+      transaction_status:data.transaction_status,
+      fraud_status:data.fraud_status,
+      gross_amount:data.gross_amount
+    });
+  }catch(e){
+    console.error('Midtrans status error:',e?.message||e);
+    res.status(500).json({error:'Gagal mengambil status Midtrans'});
+  }
+});
+
 app.post('/api/midtrans/notification',async(req,res)=>{
   try{
     if(!snap) return res.status(500).json({error:'Midtrans belum dikonfigurasi'});

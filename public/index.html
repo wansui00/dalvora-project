@@ -349,6 +349,35 @@ function updateCheckoutTotal(discount){
   if(tot) tot.textContent=rp(total);
 }
 
+async function checkPaymentStatus(orderId){
+  try{
+    const r = await fetch('/api/midtrans/status/' + encodeURIComponent(orderId), {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const d = await r.json();
+
+    if(!r.ok){
+      return alert(d.error || 'Gagal mengecek status pembayaran');
+    }
+
+    let status = d.transaction_status || 'unknown';
+
+    if(status === 'settlement' || (status === 'capture' && d.fraud_status === 'accept')){
+      status = 'paid';
+    }else if(status === 'expire' || status === 'cancel' || status === 'deny'){
+      status = 'failed';
+    }else{
+      status = 'pending';
+    }
+
+    alert('Pesanan: ' + orderId + '\nStatus pembayaran: ' + status);
+
+    load();
+  }catch(e){
+    alert('Tidak dapat mengecek status pembayaran');
+  }
+}
+
 async function order(){
   const name=$('cn').value.trim();
   const phone=$('cp').value.trim();
@@ -440,6 +469,12 @@ async function order(){
     >Salin Link</button>
 </div>
 
+
+            <button
+                type="button"
+                class="btn"
+                onclick="checkPaymentStatus('${escapeHtml(d.order_no)}')"
+            >Cek Status Pembayaran</button><br>
 
             <button
                 type="button"
