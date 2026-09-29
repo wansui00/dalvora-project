@@ -163,13 +163,24 @@ app.post("/api/forgot-password",async(req,res)=>{
       .run(code,Date.now()+10*60*1000,u.id);
 
 
-await resend.emails.send({
-  from: RESEND_FROM,
-  to: u.email,
-  subject: "Kode Reset Password DALVORA",
-  text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
+const { data, error } = await resend.emails.send({
+    from: RESEND_FROM,
+    to: u.email,
+    subject: "Kode Reset Password DALVORA",
+    text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
 });
-    res.json({ok:true});
+
+console.log("RESEND RESULT:", JSON.stringify({ data, error }));
+
+if (error) {
+    console.error("RESEND EMAIL ERROR:", JSON.stringify(error));
+    return res.status(500).json({
+        error: "Email gagal dikirim",
+        detail: error.message || String(error)
+    });
+}
+
+console.log("RESET EMAIL SENT:", data?.id || "NO_ID");    res.json({ok:true});
   }catch(e){
     console.error("FORGOT PASSWORD ERROR:",e?.message||e);
     res.status(500).json({error:"Gagal mengirim kode reset"});
