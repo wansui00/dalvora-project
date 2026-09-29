@@ -43,6 +43,22 @@ function authUI(){
   update();
 }
 function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function formatOrderDateTime(value){
+  if(!value) return '-';
+  const raw=String(value);
+  const d=new Date(raw.replace(' ','T')+'Z');
+  if(Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleString('id-ID',{
+    timeZone:'Asia/Jakarta',
+    day:'2-digit',
+    month:'long',
+    year:'numeric',
+    hour:'2-digit',
+    minute:'2-digit',
+    second:'2-digit',
+    hour12:false
+  })+' WIB';
+}
 function goHome(){closeM();window.scrollTo({top:0,behavior:'smooth'})}
 function profile(){
   const nama=(user&&user.name)?user.name:'Pengguna';
@@ -153,7 +169,7 @@ async function orders(){
     if(!r.ok) return alert(d.error||'Gagal mengambil pesanan');
     if(!d.length){modal('Pesanan','<p class="muted empty">Belum ada pesanan.</p>');return}
     const statusLabel=s=>({new:'Belum terkirim',processing:'Sedang diproses',shipped:'Sudah terkirim',completed:'Sudah terkirim',cancelled:'Dibatalkan'}[s]||s);
-    const html=d.map(o=>`<div class="box"><div class="row"><b>${escapeHtml(o.order_no)}</b><b>${rp(o.total)}</b></div><p>Status pesanan: <b>${statusLabel(o.order_status)}</b><br>Status pembayaran: <b>${escapeHtml(o.payment_status)}</b></p><div>${(o.items||[]).map(i=>`<div class="item"><span>${escapeHtml(i.name)} × ${i.qty}</span><b>${rp(i.price*i.qty)}</b></div>`).join('')}</div><small class="muted">${escapeHtml(o.created_at||'')}</small></div>`).join('');
+    const html=d.map(o=>`<div class="box"><div class="row"><b>${escapeHtml(o.order_no)}</b><b>${rp(o.total)}</b></div><p>Status pesanan: <b>${statusLabel(o.order_status)}</b><br>Status pembayaran: <b>${escapeHtml(o.payment_status)}</b></p><div>${(o.items||[]).map(i=>`<div class="item"><span>${escapeHtml(i.name)} × ${i.qty}</span><b>${rp(i.price*i.qty)}</b></div>`).join('')}</div><small class="muted">${formatOrderDateTime(o.created_at)}</small></div>`).join('');
     modal('Riwayat Pesanan',html);
   }catch(e){alert('Tidak dapat terhubung ke server')}
 }
