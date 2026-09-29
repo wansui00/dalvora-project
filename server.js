@@ -20,8 +20,7 @@ const MIDTRANS_CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY || '';
 const MIDTRANS_IS_PRODUCTION = String(process.env.MIDTRANS_IS_PRODUCTION || 'false').toLowerCase() === 'true';
 const EMAIL_USER = process.env.EMAIL_USER || '';
 const EMAIL_PASS = process.env.EMAIL_PASS || '';
-const mailer = EMAIL_USER && EMAIL_PASS ? nodemailer.createTransport({host:'smtp.gmail.com',port:587,secure:false,auth:{user:EMAIL_USER,pass:EMAIL_PASS}}) : null;
-
+const mailer = EMAIL_USER && EMAIL_PASS ? nodemailer.createTransport({host:'smtp.gmail.com',port:587,secure:false,family:4,auth:{user:EMAIL_USER,pass:EMAIL_PASS}}) : null;
 const snap = MIDTRANS_SERVER_KEY
   ? new midtransClient.Snap({
       isProduction: MIDTRANS_IS_PRODUCTION,
