@@ -5,10 +5,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Database from 'better-sqlite3';
 import midtransClient from 'midtrans-client';
-import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import { Resend } from 'resend';
+const resend = new Resend(process.env.RESEND_API_KEY);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const db = new Database(process.env.RAILWAY_VOLUME_MOUNT_PATH ? '/app/data/dalvora.db' : 'dalvora.db');
@@ -18,9 +18,6 @@ const SECRET = process.env.JWT_SECRET || 'dev-only-change-this-secret';
 const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || '';
 const MIDTRANS_CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY || '';
 const MIDTRANS_IS_PRODUCTION = String(process.env.MIDTRANS_IS_PRODUCTION || 'false').toLowerCase() === 'true';
-const EMAIL_USER = process.env.EMAIL_USER || '';
-const EMAIL_PASS = process.env.EMAIL_PASS || '';
-const mailer = EMAIL_USER && EMAIL_PASS ? nodemailer.createTransport({host:'smtp.gmail.com',port:587,secure:false,family:4,auth:{user:EMAIL_USER,pass:EMAIL_PASS}}) : null;
 const snap = MIDTRANS_SERVER_KEY
   ? new midtransClient.Snap({
       isProduction: MIDTRANS_IS_PRODUCTION,
@@ -159,19 +156,18 @@ app.post("/api/forgot-password",async(req,res)=>{
     const u=db.prepare("SELECT id,name,email FROM users WHERE email=?").get(email);
     if(!u) return res.status(404).json({error:"Email tidak terdaftar"});
 
-    if(!mailer) return res.status(500).json({error:"Email belum dikonfigurasi"});
 
     const code=String(Math.floor(100000+Math.random()*900000));
     db.prepare("UPDATE users SET reset_code=?, reset_expires=? WHERE id=?")
       .run(code,Date.now()+10*60*1000,u.id);
 
-    await mailer.sendMail({
-      from:EMAIL_USER,
-      to:u.email,
-      subject:"Kode Reset Password DALVORA",
-      text:`Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
-    });
 
+await resend.emails.send({
+  from: RESEND_FROM,
+  to: u.email,
+  subject: "Kode Reset Password DALVORA",
+  text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
+});
     res.json({ok:true});
   }catch(e){
     console.error("FORGOT PASSWORD ERROR:",e?.message||e);
