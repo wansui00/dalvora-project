@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
-const RESEND_FROM = process.env.RESEND_FROM || 'DALVORA <onboarding@resend.dev>';
+const RESEND_FROM = "onboarding@resend.dev";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const db = new Database(process.env.RAILWAY_VOLUME_MOUNT_PATH ? '/app/data/dalvora.db' : 'dalvora.db');
