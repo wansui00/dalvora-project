@@ -9,6 +9,8 @@ import midtransClient from 'midtrans-client';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Resend } from 'resend';
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
 import nodemailer from "nodemailer";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const RESEND_FROM = "onboarding@resend.dev";
@@ -219,14 +221,7 @@ app.post("/api/forgot-password",async(req,res)=>{
       .run(code,Date.now()+10*60*1000,u.id);
 
 
-const info = await mailer.sendMail({
-  from: process.env.EMAIL_USER,
-  to: u.email,
-  subject: "Kode Reset Password DALVORA",
-  text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
-});
-
-console.log("GMAIL RESET EMAIL SENT:", info.messageId);
+console.log("RESEND RESET EMAIL SENT:", info.data?.id);
 res.json({ok:true});
   }catch(e){
     console.error("FORGOT PASSWORD ERROR:",e?.message||e);
