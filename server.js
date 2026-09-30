@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
@@ -26,6 +27,12 @@ const snap = MIDTRANS_SERVER_KEY
       clientKey: MIDTRANS_CLIENT_KEY
     })
   : null;
+function verifyMidtransSignature(body){
+  const raw = String(body.order_id || "") + String(body.status_code || "") + String(body.gross_amount || "") + MIDTRANS_SERVER_KEY;
+  const expected = crypto.createHash("sha512").update(raw).digest("hex");
+  return expected === String(body.signature_key || "");
+}
+
 
 app.use(cors());
 
@@ -555,12 +562,18 @@ app.get('/api/midtrans/status/:orderNo',auth,async(req,res)=>{
 
 app.post('/api/midtrans/notification',async(req,res)=>{
   try{
-    if(!snap) return res.status(500).json({error:'Midtrans belum dikonfigurasi'});
+    if(!MIDTRANS_SERVER_KEY){
+      return res.status(500).json({error:'Midtrans belum dikonfigurasi'});
+    }
 
-    const statusResponse=await snap.transaction.notification(req.body);
-    const orderNo=statusResponse.order_id;
-    const transactionStatus=statusResponse.transaction_status;
-    const fraudStatus=statusResponse.fraud_status;
+    if(!verifyMidtransSignature(req.body)){
+      console.error('Midtrans notification: signature tidak valid');
+      return res.status(401).json({error:'Signature tidak valid'});
+    }
+
+    const orderNo=req.body.order_id;
+    const transactionStatus=req.body.transaction_status;
+    const fraudStatus=req.body.fraud_status;
 
     let paymentStatus='pending';
 
@@ -583,9 +596,15 @@ app.post('/api/midtrans/notification',async(req,res)=>{
       WHERE order_no=?
     `).run(paymentStatus,orderNo);
 
-      if(paymentStatus === "paid"){
-        deductStockForPaidOrder(orderNo);
-      }
+    if(paymentStatus === "paid"){
+      deductStockForPaidOrder(orderNo);
+    }
+
+    console.log('Midtrans webhook OK:',{
+      orderNo,
+      transactionStatus,
+      paymentStatus
+    });
 
     res.json({ok:true});
   }catch(e){
