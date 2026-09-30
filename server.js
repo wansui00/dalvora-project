@@ -12,7 +12,17 @@ import { Resend } from 'resend';
 import nodemailer from "nodemailer";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const RESEND_FROM = "onboarding@resend.dev";
-const mailer = nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
+const mailer = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
+  family: 4,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const db = new Database(process.env.RAILWAY_VOLUME_MOUNT_PATH ? '/app/data/dalvora.db' : 'dalvora.db');
