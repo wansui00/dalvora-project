@@ -220,8 +220,14 @@ app.post("/api/forgot-password",async(req,res)=>{
     db.prepare("UPDATE users SET reset_code=?, reset_expires=? WHERE id=?")
       .run(code,Date.now()+10*60*1000,u.id);
 
+await mailer.sendMail({
+  from: process.env.EMAIL_USER,
+  to: u.email,
+  subject: "Kode Reset Password DALVORA",
+  text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
+});
 
-console.log("RESEND RESET EMAIL SENT:", info.data?.id);
+console.log("GMAIL RESET EMAIL SENT");
 res.json({ok:true});
   }catch(e){
     console.error("FORGOT PASSWORD ERROR:",e?.message||e);
