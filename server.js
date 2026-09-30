@@ -14,9 +14,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const RESEND_FROM = "onboarding@resend.dev";
 const mailer = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
+  port: 465,
+  secure: true,
+  requireTLS: false,
   family: 4,
   auth: {
     user: process.env.EMAIL_USER,
@@ -220,10 +220,10 @@ app.post("/api/forgot-password",async(req,res)=>{
 
 
 const info = await mailer.sendMail({
-    from: process.env.EMAIL_USER,
-    to: u.email,
-    subject: "Kode Reset Password DALVORA",
-    text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
+  from: process.env.EMAIL_USER,
+  to: u.email,
+  subject: "Kode Reset Password DALVORA",
+  text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
 });
 
 console.log("GMAIL RESET EMAIL SENT:", info.messageId);
