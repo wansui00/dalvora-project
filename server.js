@@ -218,13 +218,33 @@ app.post("/api/forgot-password",async(req,res)=>{
     db.prepare("UPDATE users SET reset_code=?, reset_expires=? WHERE id=?")
       .run(code,Date.now()+10*60*1000,u.id);
 
-await mailer.sendMail({
-  from: process.env.EMAIL_USER,
-  to: u.email,
-  subject: "Kode Reset Password DALVORA",
-  text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
+const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+  method: "POST",
+  headers: {
+    "accept": "application/json",
+    "api-key": process.env.BREVO_API_KEY,
+    "content-type": "application/json"
+  },
+  body: JSON.stringify({
+    sender: {
+      name: "DALVORA",
+      email: "iimut6068@gmail.com"
+    },
+    to: [
+      {
+        email: u.email,
+        name: u.name
+      }
+    ],
+    subject: "Kode Reset Password DALVORA",
+    text: `Kode reset password DALVORA kamu: ${code}`
+  })
 });
 
+if (!brevoResponse.ok) {
+  const errorText = await brevoResponse.text();
+  throw new Error(`Brevo API ${brevoResponse.status}: ${errorText}`);
+}
 console.log("GMAIL RESET EMAIL SENT");
 res.json({ok:true});
   }catch(e){
