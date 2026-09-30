@@ -88,12 +88,49 @@ CREATE TABLE IF NOT EXISTS order_items(
 
 
 try { db.exec("ALTER TABLE users ADD COLUMN reset_code TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN stock_deducted INTEGER NOT NULL DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE users ADD COLUMN reset_expires INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN image TEXT DEFAULT ''"); } catch {}
 
 try { db.exec("ALTER TABLE orders ADD COLUMN promo_code TEXT DEFAULT ''"); } catch {}
 try { db.exec("ALTER TABLE orders ADD COLUMN discount INTEGER NOT NULL DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE orders ADD COLUMN subtotal INTEGER NOT NULL DEFAULT 0"); } catch {}
+
+function deductStockForPaidOrder(orderNo){
+  const tx = db.transaction(() => {
+    const order = db.prepare(
+      'SELECT id, payment_status, stock_deducted FROM orders WHERE order_no=?'
+    ).get(orderNo);
+
+    if(!order) throw new Error('Order tidak ditemukan: ' + orderNo);
+    if(order.stock_deducted) return false;
+
+    const items = db.prepare(
+      'SELECT product_id, qty FROM order_items WHERE order_id=?'
+    ).all(order.id);
+
+    for(const item of items){
+      const result = db.prepare(`
+        UPDATE products
+        SET stock = stock - ?
+        WHERE id=? AND stock >= ?
+      `).run(item.qty, item.product_id, item.qty);
+
+      if(result.changes !== 1){
+        throw new Error('Stok tidak mencukupi untuk product_id ' + item.product_id);
+      }
+    }
+
+    db.prepare(
+      'UPDATE orders SET stock_deducted=1 WHERE id=?'
+    ).run(order.id);
+
+    return true;
+  });
+
+  return tx();
+}
+
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@dalvora.id';
 const adminPass = process.env.ADMIN_PASSWORD || 'ganti-password-ini';
 const exists = db.prepare('SELECT id FROM users WHERE email=?').get(adminEmail);
@@ -500,6 +537,10 @@ app.get('/api/midtrans/status/:orderNo',auth,async(req,res)=>{
     else if(data.transaction_status==="expire" || data.transaction_status==="cancel" || data.transaction_status==="deny") paymentStatus="failed";
     db.prepare("UPDATE orders SET payment_status=? WHERE order_no=?").run(paymentStatus,orderNo);
 
+    if(paymentStatus === "paid"){
+      deductStockForPaidOrder(orderNo);
+    }
+
     res.json({
       order_id:data.order_id,
       transaction_status:data.transaction_status,
@@ -541,6 +582,10 @@ app.post('/api/midtrans/notification',async(req,res)=>{
       SET payment_status=?
       WHERE order_no=?
     `).run(paymentStatus,orderNo);
+
+      if(paymentStatus === "paid"){
+        deductStockForPaidOrder(orderNo);
+      }
 
     res.json({ok:true});
   }catch(e){
