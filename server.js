@@ -9,8 +9,10 @@ import midtransClient from 'midtrans-client';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Resend } from 'resend';
+import nodemailer from "nodemailer";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const RESEND_FROM = "onboarding@resend.dev";
+const mailer = nodemailer.createTransport({ service: "gmail", auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS } });
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const db = new Database(process.env.RAILWAY_VOLUME_MOUNT_PATH ? '/app/data/dalvora.db' : 'dalvora.db');
@@ -207,24 +209,15 @@ app.post("/api/forgot-password",async(req,res)=>{
       .run(code,Date.now()+10*60*1000,u.id);
 
 
-const { data, error } = await resend.emails.send({
-    from: RESEND_FROM,
+const info = await mailer.sendMail({
+    from: process.env.EMAIL_USER,
     to: u.email,
     subject: "Kode Reset Password DALVORA",
     text: `Kode reset password DALVORA kamu: ${code}. Kode berlaku 10 menit.`
 });
 
-console.log("RESEND RESULT:", JSON.stringify({ data, error }));
-
-if (error) {
-    console.error("RESEND EMAIL ERROR:", JSON.stringify(error));
-    return res.status(500).json({
-        error: "Email gagal dikirim",
-        detail: error.message || String(error)
-    });
-}
-
-console.log("RESET EMAIL SENT:", data?.id || "NO_ID");    res.json({ok:true});
+console.log("GMAIL RESET EMAIL SENT:", info.messageId);
+res.json({ok:true});
   }catch(e){
     console.error("FORGOT PASSWORD ERROR:",e?.message||e);
     res.status(500).json({error:"Gagal mengirim kode reset"});
