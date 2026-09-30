@@ -12,13 +12,11 @@ import { Resend } from 'resend';
 import dns from "dns";
 dns.setDefaultResultOrder("ipv4first");
 import nodemailer from "nodemailer";
-const resend = new Resend(process.env.RESEND_API_KEY);
-const RESEND_FROM = "onboarding@resend.dev";
 const mailer = nodemailer.createTransport({
-  host: "74.125.68.109",
-  port: 465,
-  secure: true,
-  requireTLS: false,
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
   family: 4,
   auth: {
     user: process.env.EMAIL_USER,
