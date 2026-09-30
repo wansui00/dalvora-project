@@ -237,7 +237,7 @@ const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       }
     ],
     subject: "Kode Reset Password DALVORA",
-    text: `Kode reset password DALVORA kamu: ${code}`
+   textContent: `Kode reset password DALVORA kamu: ${code}`
   })
 });
 
