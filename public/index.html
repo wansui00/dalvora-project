@@ -219,9 +219,40 @@ async function ensureSnap(){
 
 let checkoutPromo=null;
 
-function checkout(){
+async function checkout(){
   if(!token) return login();
+  const storeRes=await fetch('/api/store-settings',{cache:'no-store'});
+  const store=await storeRes.json();
 
+  if(!storeRes.ok){
+    return alert(store.error||'Gagal mengecek jam operasional toko');
+  }
+
+  if(!store.active){
+    return alert(`Toko sedang tutup. Jam buka ${store.open_time} - ${store.close_time}`);
+  }
+
+  const jakartaParts=new Intl.DateTimeFormat('en-GB',{
+    timeZone:'Asia/Jakarta',
+    hour:'2-digit',
+    minute:'2-digit',
+    hourCycle:'h23'
+  }).formatToParts(new Date());
+
+  const currentTime=
+    jakartaParts.find(x=>x.type==='hour').value+':'+
+    jakartaParts.find(x=>x.type==='minute').value;
+
+  const openTime=store.open_time;
+  const closeTime=store.close_time;
+
+  const isOpen=openTime<closeTime
+    ? currentTime>=openTime && currentTime<closeTime
+    : currentTime>=openTime || currentTime<closeTime;
+
+  if(!isOpen){
+    return alert(`Toko sedang tutup. Jam buka ${openTime} - ${closeTime}`);
+  }
   const ids=Object.keys(cartData).filter(id=>Number(cartData[id])>0);
   if(!ids.length) return alert('Keranjang masih kosong');
 

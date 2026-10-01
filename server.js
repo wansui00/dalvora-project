@@ -95,6 +95,12 @@ CREATE TABLE IF NOT EXISTS promos(
   expires_at TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS store_settings(
+  id INTEGER PRIMARY KEY CHECK(id=1),
+  open_time TEXT NOT NULL DEFAULT '10:00',
+  close_time TEXT NOT NULL DEFAULT '22:00',
+  active INTEGER NOT NULL DEFAULT 1
+);
 CREATE TABLE IF NOT EXISTS order_items(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  order_id INTEGER NOT NULL,
@@ -288,6 +294,34 @@ app.post('/api/orders',auth,async(req,res)=>{
     if(!name||!phone||!address||!Array.isArray(items)||!items.length)
       return res.status(400).json({error:'Data pesanan belum lengkap'});
 
+    const store=db.prepare('SELECT * FROM store_settings WHERE id=1').get();
+
+    if(!store || !store.active){
+      return res.status(403).json({error:'Toko sedang tutup'});
+    }
+
+    const jakartaParts=new Intl.DateTimeFormat('en-GB',{
+      timeZone:'Asia/Jakarta',
+      hour:'2-digit',
+      minute:'2-digit',
+      hourCycle:'h23'
+    }).formatToParts(new Date());
+
+    const currentTime=jakartaParts.find(x=>x.type==='hour').value+':'+
+                      jakartaParts.find(x=>x.type==='minute').value;
+
+    const openTime=store.open_time;
+    const closeTime=store.close_time;
+
+    const isOpen=openTime<closeTime
+      ? currentTime>=openTime && currentTime<closeTime
+      : currentTime>=openTime || currentTime<closeTime;
+
+    if(!isOpen){
+      return res.status(403).json({
+        error:`Toko sedang tutup. Jam buka ${openTime} - ${closeTime}`
+      });
+    }
     let subtotal=0;
     const clean=[];
 
@@ -659,6 +693,47 @@ app.post('/api/midtrans/notification',async(req,res)=>{
   }
 });
 
+app.get('/api/store-settings',(req,res)=>{
+  const settings=db.prepare('SELECT * FROM store_settings WHERE id=1').get();
+  if(!settings){
+    db.prepare('INSERT INTO store_settings(id,open_time,close_time,active) VALUES(1,?,?,?)')
+      .run('10:00','22:00',1);
+    return res.json({
+      id:1,
+      open_time:'10:00',
+      close_time:'22:00',
+      active:1
+    });
+  }
+  res.json(settings);
+});
+
+app.patch('/api/admin/store-settings',auth,admin,(req,res)=>{
+  const {open_time,close_time,active}=req.body;
+
+  if(!/^\d{2}:\d{2}$/.test(String(open_time||'')) ||
+     !/^\d{2}:\d{2}$/.test(String(close_time||''))){
+    return res.status(400).json({error:'Format jam harus HH:MM'});
+  }
+
+  const activeValue=active ? 1 : 0;
+
+  db.prepare(`
+    INSERT INTO store_settings(id,open_time,close_time,active)
+    VALUES(1,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET
+      open_time=excluded.open_time,
+      close_time=excluded.close_time,
+      active=excluded.active
+  `).run(open_time,close_time,activeValue);
+
+  res.json({
+    ok:true,
+    open_time,
+    close_time,
+    active:activeValue
+  });
+});
 app.get('/api/admin/orders',auth,admin,(req,res)=>{
   const orders=db.prepare('SELECT * FROM orders ORDER BY id DESC').all();
   const items=db.prepare('SELECT * FROM order_items WHERE order_id=?');
