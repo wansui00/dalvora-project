@@ -116,6 +116,8 @@ try { db.exec("ALTER TABLE users ADD COLUMN reset_code TEXT DEFAULT ''"); } catc
 try { db.exec("ALTER TABLE orders ADD COLUMN stock_deducted INTEGER NOT NULL DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE users ADD COLUMN reset_expires INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN image TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE store_settings ADD COLUMN whatsapp TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE store_settings ADD COLUMN address TEXT DEFAULT ''"); } catch {}
 
 try { db.exec("ALTER TABLE orders ADD COLUMN promo_code TEXT DEFAULT ''"); } catch {}
 try { db.exec("ALTER TABLE orders ADD COLUMN discount INTEGER NOT NULL DEFAULT 0"); } catch {}
@@ -709,8 +711,7 @@ app.get('/api/store-settings',(req,res)=>{
 });
 
 app.patch('/api/admin/store-settings',auth,admin,(req,res)=>{
-  const {open_time,close_time,active}=req.body;
-
+const {open_time,close_time,active,whatsapp,address}=req.body;
   if(!/^\d{2}:\d{2}$/.test(String(open_time||'')) ||
      !/^\d{2}:\d{2}$/.test(String(close_time||''))){
     return res.status(400).json({error:'Format jam harus HH:MM'});
@@ -719,20 +720,23 @@ app.patch('/api/admin/store-settings',auth,admin,(req,res)=>{
   const activeValue=active ? 1 : 0;
 
   db.prepare(`
-    INSERT INTO store_settings(id,open_time,close_time,active)
-    VALUES(1,?,?,?)
-    ON CONFLICT(id) DO UPDATE SET
-      open_time=excluded.open_time,
-      close_time=excluded.close_time,
-      active=excluded.active
-  `).run(open_time,close_time,activeValue);
-
-  res.json({
-    ok:true,
-    open_time,
-    close_time,
-    active:activeValue
-  });
+INSERT INTO store_settings(id,open_time,close_time,active,whatsapp,address)
+VALUES(1,?,?,?,?,?)
+ON CONFLICT(id) DO UPDATE SET
+  open_time=excluded.open_time,
+  close_time=excluded.close_time,
+  active=excluded.active,
+  whatsapp=excluded.whatsapp,
+  address=excluded.address
+`).run(open_time,close_time,activeValue,whatsapp||'',address||'');
+res.json({
+  ok:true,
+  open_time,
+  close_time,
+  active:activeValue,
+  whatsapp:whatsapp||'',
+  address:address||''
+});
 });
 app.get('/api/admin/orders',auth,admin,(req,res)=>{
   const orders=db.prepare('SELECT * FROM orders ORDER BY id DESC').all();
@@ -746,7 +750,6 @@ app.patch('/api/admin/orders/:id',auth,admin,(req,res)=>{
     .run(order_status||null,payment_status||null,req.params.id);
   res.json({ok:true});
 });
-
 app.post('/api/admin/products',auth,admin,(req,res)=>{
   const {name,price,description,emoji,stock,image}=req.body;
   if(!name||Number(price)<=0) return res.status(400).json({error:'Nama dan harga wajib'});
