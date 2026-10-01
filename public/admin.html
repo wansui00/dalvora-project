@@ -25,9 +25,14 @@ body{font-family:system-ui;margin:0;background:#fff8ef;color:#241812}.wrap{max-w
   <label>
     <input id="storeActive" type="checkbox">
     Toko aktif
-  </label>
-
-  <button class="btn" onclick="saveStoreSettings()">Simpan Pengaturan</button>
+</label>
+<label>WhatsApp Toko
+    <input id="storeWhatsapp" type="tel" placeholder="Contoh: 081234567890">
+</label>
+<label>Alamat Toko
+    <textarea id="storeAddress" placeholder="Masukkan alamat toko"></textarea>
+</label>
+<button class="btn" onclick="saveStoreSettings()">Simpan Pengaturan</button>
 </div>
 <h2>Promo / Diskon</h2><div class="card"><div class="form"><input id="promoCode" placeholder="Kode promo, contoh DALVORA10"><select id="promoType"><option value="percent">Persentase (%)</option><option value="fixed">Potongan nominal (Rp)</option></select><input id="promoValue" type="number" min="1" placeholder="Nilai diskon"><input id="promoExpires" type="datetime-local"><button class="btn" onclick="addPromo()">Tambah Promo</button></div></div><div id="promos"></div><h2>Pesanan</h2><div id="orders"></div>
 <h2>Menu</h2><div id="products" class="products"></div>
@@ -163,11 +168,11 @@ async function editProduct(id){
 async function delProduct(id){if(!confirm('Hapus menu ini dari katalog?'))return;try{await api('/api/admin/products/'+id,{method:'DELETE'});load()}catch(e){alert(e.message)}}
 load();
 loadPromos();
-async function loadStoreSettings(){try{const d=await api("/api/store-settings");$("openTime").value=d.open_time||"10:00";$("closeTime").value=d.close_time||"22:00";$("storeActive").checked=Number(d.active)===1}catch(e){console.error("Gagal memuat pengaturan toko:",e.message||e)}} loadStoreSettings();
+async function loadStoreSettings(){try{const d=await api("/api/store-settings");$("openTime").value=d.open_time||"10:00";$("closeTime").value=d.close_time||"22:00";$("storeActive").checked=Number(d.active)===1;$("storeWhatsapp").value=d.whatsapp||"";$("storeAddress").value=d.address||""}catch(e){console.error("Gagal memuat pengaturan toko:",e.message||e)}} loadStoreSettings();
 async function saveStoreSettings(){
   const open_time=$("openTime").value;
   const close_time=$("closeTime").value;
-  const active=$("storeActive").checked;
+  const active=$("storeActive").checked;const whatsapp=$("storeWhatsapp").value.trim();const address=$("storeAddress").value.trim();
 
   try{
     const d=await api("/api/admin/store-settings",{
@@ -175,13 +180,13 @@ async function saveStoreSettings(){
       body:JSON.stringify({
         open_time,
         close_time,
-        active
+        active, whatsapp, address
       })
     });
 
     if(!d) return;
 
-    alert("Pengaturan jam toko berhasil disimpan");
+    alert("Pengaturan toko berhasil disimpan");
   }catch(e){
     alert(e.message||"Gagal menyimpan pengaturan toko");
   }
