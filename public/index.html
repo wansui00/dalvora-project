@@ -169,13 +169,34 @@ async function orders(){
     if(!r.ok) return alert(d.error||'Gagal mengambil pesanan');
     if(!d.length){modal('Pesanan','<p class="muted empty">Belum ada pesanan.</p>');return}
     const statusLabel=s=>({new:'Belum terkirim',processing:'Sedang diproses',shipped:'Sudah terkirim',completed:'Sudah terkirim',cancelled:'Dibatalkan'}[s]||s);
-    const html=d.map(o=>`<div class="box"><div class="row"><b>${escapeHtml(o.order_no)}</b><b>${rp(o.total)}</b></div><p>Status pesanan: <b>${statusLabel(o.order_status)}</b><br>Status pembayaran: <b>${escapeHtml(o.payment_status)}</b></p><div>${(o.items||[]).map(i=>`<div class="item"><span>${escapeHtml(i.name)} × ${i.qty}</span><b>${rp(i.price*i.qty)}</b></div>`).join('')}</div><small class="muted">${formatOrderDateTime(o.created_at)}</small>
-${o.payment_status === 'pending' ? `<button type="button" class="btn" style="margin-top:12px;" onclick="checkPaymentStatus('${escapeHtml(o.order_no)}')">Cek Status Pembayaran</button>` : ''}
+    const html=d.map(o=>`<div class="box"><div class="row"><b>${escapeHtml(o.order_no)}</b><b>${rp(o.total)}</b></div><p>Status pesanan: <b>${statusLabel(o.order_status)}</b><br>Status pembayaran: <b>${o.payment_status==='paid'?'Lunas':o.payment_status==='pending'?'Menunggu pembayaran':o.payment_status==='failed'?'Pembayaran gagal':'Tidak diketahui'}</b></p><div>${(o.items||[]).map(i=>`<div class="item"><span>${escapeHtml(i.name)} × ${i.qty}</span><b>${rp(i.price*i.qty)}</b></div>`).join('')}</div><small class="muted">${formatOrderDateTime(o.created_at)}</small>
+${o.payment_status === 'pending' && o.order_status !== 'cancelled' ? `<button type="button" class="btn" style="margin-top:12px;" onclick="checkPaymentStatus('${escapeHtml(o.order_no)}')">Cek Status Pembayaran</button>` : ''}${o.order_status === 'new' && o.payment_status === 'pending' ? `<button type="button" class="btn" style="margin-top:8px;" onclick="cancelOrder(${o.id})">Batalkan Pesanan</button>` : ''}
 </div>`).join('');
     modal('Riwayat Pesanan',html);
   }catch(e){alert('Tidak dapat terhubung ke server')}
 }
 
+async function cancelOrder(id){
+  if(!confirm('Yakin ingin membatalkan pesanan ini?')) return;
+
+  try{
+    const r=await fetch('/api/my-orders/'+id+'/cancel',{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+token}
+    });
+
+    const d=await r.json();
+
+    if(!r.ok){
+      return alert(d.error||'Pesanan tidak dapat dibatalkan');
+    }
+
+    alert('Pesanan berhasil dibatalkan');
+    orders();
+  }catch(e){
+    alert('Tidak dapat terhubung ke server');
+  }
+}
 async function ensureSnap(){
   if(window.snap) return true;
 

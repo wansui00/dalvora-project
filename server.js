@@ -555,6 +555,30 @@ app.get('/api/my-orders',auth,(req,res)=>{
   res.json(orders.map(o=>({...o,items:items.all(o.id)})));
 });
 
+app.patch('/api/my-orders/:id/cancel',auth,(req,res)=>{
+  const order=db.prepare(
+    'SELECT id, order_status, payment_status FROM orders WHERE id=? AND user_id=?'
+  ).get(req.params.id,req.user.id);
+
+  if(!order){
+    return res.status(404).json({error:'Pesanan tidak ditemukan'});
+  }
+
+  if(order.order_status!=='new' || order.payment_status!=='pending'){
+    return res.status(400).json({
+      error:'Pesanan tidak dapat dibatalkan'
+    });
+  }
+
+  db.prepare(
+    "UPDATE orders SET order_status='cancelled' WHERE id=? AND user_id=?"
+  ).run(order.id,req.user.id);
+
+  res.json({
+    success:true,
+    message:'Pesanan berhasil dibatalkan'
+  });
+});
 app.get('/api/midtrans/status/:orderNo',auth,async(req,res)=>{
   try{
     if(!snap) return res.status(500).json({error:'Midtrans belum dikonfigurasi'});
