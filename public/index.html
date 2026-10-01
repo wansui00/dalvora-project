@@ -19,7 +19,11 @@
   <section class="hero"><div class="muted">KOREAN DRINK • FRESH BEVERAGE</div><h1>Lebih dari sekadar minuman.</h1><p class="muted">Pesan langsung melalui DALVORA.</p></section>
   <h2>Menu</h2>
   <div class="grid" id="products"><p class="muted">Memuat menu...</p></div>
-  <div class="box"><b>📱 Pesan langsung di DALVORA</b><p class="muted">Login → pilih menu → checkout → bayar QRIS melalui Midtrans.</p></div>
+  <div class="box" id="storeContact">
+<b>📱 Pesan langsung di DALVORA</b>
+<p class="muted">Login → pilih menu → checkout → bayar QRIS melalui Midtrans.</p>
+<div id="storeContactInfo"></div>
+</div>
 </div>
 <div class="modal" id="m" role="dialog" aria-modal="true" aria-hidden="true"><div class="sheet"><div class="row"><h2 id="title">Login</h2><button type="button" class="btn" onclick="closeM()">✕</button></div><div id="content"></div></div></div>
 <script>
@@ -73,6 +77,35 @@ function logout(){
   closeM();authUI();
   alert('Berhasil logout');
 }
+async function loadStoreContact(){
+  try{
+    const r=await fetch('/api/store-settings',{cache:'no-store'});
+    const d=await r.json();
+    if(!r.ok) return;
+
+    const wa=String(d.whatsapp||'').trim();
+    const address=String(d.address||'').trim();
+    const el=$('storeContactInfo');
+    if(!el) return;
+
+    let html='';
+    if(address){
+      html += `<p><b>📍 Alamat Toko</b><br>${escapeHtml(address)}</p>`;
+    }
+    if(wa){
+      const digits=wa.replace(/[^0-9]/g,'');
+      const intl=digits.startsWith('0')?'62'+digits.slice(1):digits;
+      html += `<p><b>💬 WhatsApp Toko</b><br>${escapeHtml(wa)}<br><a class="btn" href="https://wa.me/${intl}" target="_blank" rel="noopener">Hubungi via WhatsApp</a></p>`;
+    }
+    if(!html){
+      html='<p class="muted">Kontak toko belum tersedia.</p>';
+    }
+    el.innerHTML=html;
+  }catch(e){
+    console.error('Gagal memuat kontak toko:',e.message||e);
+  }
+}
+
 async function load(){
   try{
     const r=await fetch('/api/products',{cache:'no-store'});
@@ -551,7 +584,7 @@ modal('Pesanan dibuat',`
     alert('Tidak dapat terhubung ke server');
   }
 }
-authUI();load();
+authUI();load();loadStoreContact();
 </script>
 </body>
 </html>
