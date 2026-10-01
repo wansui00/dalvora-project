@@ -8,17 +8,744 @@
 <title>DALVORA</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#fff8ef;color:#241812;font-family:system-ui,sans-serif}.wrap{max-width:900px;margin:auto;padding:18px}.nav{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-weight:900;letter-spacing:3px;color:#5b3928;flex-shrink:0}.brand small{letter-spacing:1px}.nav-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:800;background:#5b3928;color:white;cursor:pointer}.btn:active{transform:translateY(1px)}.hero{padding:35px 0}.hero h1{font-size:clamp(42px,8vw,72px);line-height:.95}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.card{background:white;border:1px solid #eaded3;border-radius:18px;padding:15px}.emoji{font-size:50px;background:#f8dfcc;border-radius:15px;padding:25px;text-align:center;min-height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden}.emoji img{width:100%;height:120px;object-fit:cover;border-radius:12px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.price{font-weight:900}.muted{color:#7d6a5e}.box{background:white;border:1px solid #eaded3;border-radius:18px;padding:18px;margin:15px 0}.modal{display:none;position:fixed;z-index:1000;inset:0;background:#0008;align-items:flex-end}.modal.on{display:flex}.sheet{background:#fff8ef;width:100%;max-width:650px;margin:auto;padding:20px;border-radius:22px 22px 0 0;max-height:90vh;overflow:auto}.form{display:grid;gap:9px}.form input,.form textarea,.form select{width:100%;padding:12px;border:1px solid #eaded3;border-radius:10px;font:inherit;background:#fff}.item{padding:10px 0;border-bottom:1px solid #eaded3;display:flex;justify-content:space-between;gap:10px}.empty{text-align:center;padding:15px 0}@media(max-width:650px){.nav{align-items:flex-start}.nav-actions{width:100%;justify-content:flex-start}.grid{grid-template-columns:1fr}.hero{padding-top:25px}}
-.brand img{width:120px;height:120px;object-fit:contain;display:block;border-radius:12px}</style>
+.brand img{width:120px;height:120px;object-fit:contain;display:block;border-radius:12px}
+/* ===== DALVORA HOME - FINAL VISUAL OVERRIDE ===== */
+
+.wrap{
+  max-width:1100px;
+  padding:18px 24px 50px;
+}
+
+.nav{
+  display:block;
+  width:100%;
+}
+
+.brand{
+  width:100%;
+  text-align:center;
+}
+
+.brand img{
+  width:100%;
+  max-width:820px;
+  height:175px;
+  object-fit:fill;
+  display:block;
+  margin:0 auto;
+  border-radius:90px;
+}
+
+.hero{
+  padding:18px 0 28px;
+  text-align:center;
+}
+
+.hero-tag{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  font-weight:800;
+  letter-spacing:2px;
+  font-size:clamp(13px,2.4vw,21px);
+  color:#67564c;
+}
+
+.hero-tag span{
+  width:70px;
+  height:1px;
+  background:#a88772;
+  display:block;
+}
+
+.hero h1{
+  margin:32px 0 18px;
+  line-height:.92;
+  font-size:clamp(48px,8vw,88px);
+  letter-spacing:-2px;
+}
+
+.hero h1 em{
+  display:block;
+  font-style:italic;
+  font-weight:700;
+  color:#713d24;
+  font-size:.68em;
+  letter-spacing:-1px;
+}
+
+.hero h1 strong{
+  display:block;
+  font-weight:900;
+  color:#351d13;
+}
+
+.hero-sub{
+  margin:0 0 30px;
+  color:#6f5c50;
+  font-size:clamp(18px,3vw,29px);
+}
+
+.hero-sub b{
+  color:#713d24;
+}
+
+.nav-actions{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:24px;
+  flex-wrap:wrap;
+}
+
+.nav-actions .btn{
+  min-width:300px;
+  padding:17px 28px;
+  border-radius:18px;
+  font-size:20px;
+  background:#6b3922;
+}
+
+h2{
+  margin:22px 0 18px;
+  font-size:clamp(38px,5vw,54px);
+  color:#351d13;
+}
+
+@media(max-width:650px){
+  .wrap{
+    padding:14px 16px 40px;
+  }
+
+  .brand img{
+    width:100%;
+    height:145px;
+    border-radius:75px;
+  }
+
+  .hero{
+    padding-top:12px;
+  }
+
+  .hero-tag{
+    gap:8px;
+    font-size:13px;
+    letter-spacing:1px;
+    white-space:nowrap;
+  }
+
+  .hero-tag span{
+    width:28px;
+  }
+
+  .hero h1{
+    margin:27px 0 16px;
+    font-size:clamp(45px,13vw,68px);
+  }
+
+  .hero-sub{
+    font-size:18px;
+    margin-bottom:25px;
+  }
+
+  .nav-actions{
+    gap:12px;
+  }
+
+  .nav-actions .btn{
+    min-width:0;
+    flex:1;
+    padding:15px 10px;
+    font-size:17px;
+    border-radius:16px;
+  }
+}
+
+
+/* ===== PENYESUAIAN AKHIR BAGIAN ATAS DALVORA ===== */
+
+.brand img{
+  width:92% !important;
+  max-width:820px !important;
+  height:185px !important;
+  object-fit:fill !important;
+  margin:0 auto !important;
+  border-radius:95px !important;
+}
+
+.hero{
+  padding:18px 0 24px !important;
+  text-align:center !important;
+}
+
+.hero-tag{
+  margin-top:2px !important;
+  gap:18px !important;
+  font-size:clamp(13px,2.1vw,20px) !important;
+  letter-spacing:1.8px !important;
+  line-height:1.2 !important;
+}
+
+.hero-tag span{
+  width:72px !important;
+  height:1px !important;
+  flex-shrink:0 !important;
+}
+
+.hero h1{
+  margin:32px 0 18px !important;
+  line-height:.9 !important;
+  letter-spacing:-1.5px !important;
+  font-size:clamp(50px,7.5vw,82px) !important;
+}
+
+.hero h1 em{
+  font-family:"Brush Script MT","Segoe Script","Comic Sans MS",cursive !important;
+  font-style:normal !important;
+  font-weight:700 !important;
+  font-size:.72em !important;
+  letter-spacing:-1px !important;
+  color:#713d24 !important;
+}
+
+.hero h1 strong{
+  font-family:system-ui,sans-serif !important;
+  font-weight:900 !important;
+  letter-spacing:-2px !important;
+  color:#321b11 !important;
+}
+
+.hero-sub{
+  margin:0 0 28px !important;
+  font-size:clamp(17px,2.7vw,27px) !important;
+  color:#6d5a4e !important;
+}
+
+.hero-sub b{
+  color:#713d24 !important;
+  font-weight:800 !important;
+}
+
+.nav-actions{
+  gap:24px !important;
+}
+
+.nav-actions .btn{
+  min-width:285px !important;
+  height:70px !important;
+  padding:14px 24px !important;
+  border-radius:20px !important;
+  font-size:20px !important;
+  background:#6b3922 !important;
+}
+
+@media(max-width:650px){
+  .brand img{
+    width:92% !important;
+    height:125px !important;
+    border-radius:65px !important;
+  }
+
+  .hero{
+    padding:14px 0 20px !important;
+  }
+
+  .hero-tag{
+    gap:7px !important;
+    font-size:12.5px !important;
+    letter-spacing:1px !important;
+  }
+
+  .hero-tag span{
+    width:28px !important;
+  }
+
+  .hero h1{
+    margin:27px 0 17px !important;
+    font-size:clamp(45px,12vw,67px) !important;
+    line-height:.91 !important;
+  }
+
+  .hero h1 em{
+    font-size:.68em !important;
+  }
+
+  .hero-sub{
+    font-size:18px !important;
+    margin-bottom:25px !important;
+  }
+
+  .nav-actions{
+    gap:12px !important;
+  }
+
+  .nav-actions .btn{
+    min-width:0 !important;
+    height:62px !important;
+    flex:1 1 0 !important;
+    padding:12px 8px !important;
+    font-size:17px !important;
+    border-radius:17px !important;
+  }
+}
+
+
+
+/* ===== DALVORA HOME - MATCH TARGET SCREENSHOT ===== */
+
+body{
+  background:#fbf3e8;
+}
+
+.wrap{
+  max-width:1024px;
+  margin:auto;
+  padding:18px 34px 45px;
+}
+
+.nav{
+  display:block;
+  width:100%;
+}
+
+.brand{
+  width:100%;
+  text-align:center;
+}
+
+.brand img{
+  width:min(82%,820px);
+  height:auto;
+  max-height:175px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto;
+  border-radius:70px;
+}
+
+.hero{
+  padding:15px 0 22px;
+  text-align:center;
+}
+
+.hero-tag{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:13px;
+  font-weight:800;
+  letter-spacing:2px;
+  font-size:clamp(12px,2vw,18px);
+  color:#67564c;
+}
+
+.hero-tag span{
+  width:48px;
+  height:1px;
+  background:#a88772;
+  display:block;
+}
+
+.hero h1{
+  margin:24px 0 12px;
+  line-height:.94;
+  font-size:clamp(43px,7vw,72px);
+  letter-spacing:-2px;
+}
+
+.hero h1 em{
+  display:block;
+  font-style:italic;
+  font-weight:700;
+  color:#713d24;
+  font-size:.68em;
+  letter-spacing:-1px;
+}
+
+.hero h1 strong{
+  display:block;
+  font-weight:900;
+  color:#351d13;
+}
+
+.hero-sub{
+  margin:0 0 22px;
+  color:#6f5c50;
+  font-size:clamp(17px,2.5vw,25px);
+}
+
+.hero-sub b{
+  color:#713d24;
+}
+
+.nav-actions{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.nav-actions .btn{
+  min-width:160px;
+  padding:12px 20px;
+  border-radius:14px;
+  font-size:17px;
+}
+
+/* MENU */
+
+.category-section{
+  margin-top:8px;
+}
+
+.category-section h2{
+  margin:0 0 13px;
+  font-size:clamp(30px,4.5vw,42px);
+  line-height:1;
+  color:#351d13;
+}
+
+.category-section h2::after{
+  content:"";
+  display:block;
+  width:48px;
+  height:4px;
+  margin-top:8px;
+  background:#713d24;
+  border-radius:10px;
+}
+
+.category-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px 14px;
+}
+
+.category-card{
+  min-height:108px;
+  height:108px;
+  border:0;
+  border-radius:18px;
+  background:#f3e2d2;
+  padding:8px 12px;
+  display:grid;
+  grid-template-columns:92px 1fr 22px;
+  align-items:center;
+  gap:9px;
+  text-align:left;
+  color:#351d13;
+  font:inherit;
+  cursor:pointer;
+  box-shadow:none;
+}
+
+.category-card:active{
+  transform:scale(.99);
+}
+
+.category-image{
+  width:92px;
+  height:92px;
+  border-radius:15px;
+  background:#f9eee5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font-size:42px;
+}
+
+.category-image img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.category-name{
+  font-weight:900;
+  font-size:clamp(16px,2.3vw,22px);
+  line-height:1.05;
+}
+
+.category-arrow{
+  font-size:34px;
+  font-weight:300;
+  color:#713d24;
+  text-align:center;
+}
+
+/* produk hanya muncul setelah kategori dipilih */
+#products{
+  margin-top:18px;
+}
+
+@media(max-width:700px){
+
+  .wrap{
+    padding:12px 31px 35px;
+  }
+
+  .brand img{
+    width:88%;
+    max-height:140px;
+  }
+
+  .hero{
+    padding-top:10px;
+    padding-bottom:20px;
+  }
+
+  .hero-tag{
+    font-size:12px;
+    letter-spacing:1.5px;
+    gap:9px;
+  }
+
+  .hero-tag span{
+    width:38px;
+  }
+
+  .hero h1{
+    margin-top:20px;
+    font-size:clamp(39px,9vw,60px);
+  }
+
+  .hero-sub{
+    font-size:17px;
+    margin-bottom:18px;
+  }
+
+  .nav-actions .btn{
+    min-width:0;
+    flex:1;
+    font-size:15px;
+    padding:11px 8px;
+  }
+
+  .category-section{
+    margin-top:5px;
+  }
+
+  .category-section h2{
+    font-size:34px;
+    margin-bottom:12px;
+  }
+
+  .category-grid{
+    gap:10px;
+  }
+
+  .category-card{
+    height:91px;
+    min-height:91px;
+    grid-template-columns:62px 1fr 16px;
+    gap:7px;
+    padding:6px 7px;
+    border-radius:16px;
+  }
+
+  .category-image{
+    width:62px;
+    height:79px;
+    border-radius:13px;
+    font-size:32px;
+  }
+
+  .category-name{
+    font-size:15px;
+  }
+
+  .category-arrow{
+    font-size:28px;
+  }
+}
+/* ===== CATEGORY FINAL SIZE - SCREENSHOT 2 ===== */
+.category-section{
+  margin-top:6px !important;
+}
+
+.category-section h2{
+  margin:0 0 12px !important;
+  font-size:32px !important;
+  line-height:1.05 !important;
+}
+
+.category-section h2::after{
+  width:48px !important;
+  height:4px !important;
+  margin-top:8px !important;
+}
+
+.category-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:10px 12px !important;
+}
+
+.category-card{
+  height:94px !important;
+  min-height:94px !important;
+  padding:6px 8px !important;
+  border-radius:16px !important;
+  grid-template-columns:58px 1fr 16px !important;
+  gap:7px !important;
+}
+
+.category-image{
+  width:58px !important;
+  height:78px !important;
+  border-radius:12px !important;
+  font-size:30px !important;
+}
+
+.category-name{
+  font-size:15px !important;
+  line-height:1.08 !important;
+}
+
+.category-arrow{
+  font-size:27px !important;
+  padding:0 !important;
+}
+
+/* ===== FINAL MOBILE SIZE ===== */
+@media (max-width:600px){
+
+.brand img{
+  width:220px !important;
+  max-width:58vw !important;
+  height:auto !important;
+  display:block;
+  margin:0 auto !important;
+}
+
+.nav-actions{
+  gap:10px !important;
+  justify-content:center !important;
+}
+
+.nav-actions .btn{
+  padding:10px 16px !important;
+  font-size:16px !important;
+  border-radius:18px !important;
+  min-width:130px !important;
+}
+
+.category-section{
+  margin-top:5px !important;
+}
+
+.category-section h2{
+  font-size:32px !important;
+  margin-bottom:10px !important;
+}
+
+.category-grid{
+  gap:10px !important;
+}
+
+.category-card{
+  height:100px !important;
+  min-height:100px !important;
+  padding:7px 8px !important;
+  grid-template-columns:1fr 18px !important;
+  grid-template-rows:28px 1fr !important;
+  gap:2px !important;
+  border-radius:16px !important;
+}
+
+.category-name{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  align-self:center !important;
+}
+
+.category-image{
+  grid-column:1 !important;
+  grid-row:2 !important;
+  width:58px !important;
+  height:58px !important;
+  border-radius:12px !important;
+  font-size:30px !important;
+  align-self:center !important;
+}
+
+.category-arrow{
+  grid-column:2 !important;
+  grid-row:1 / span 2 !important;
+  font-size:25px !important;
+  padding:0 !important;
+  align-self:center !important;
+}
+}
+
+</style>
 </head>
 <body>
 <div class="wrap">
   <div class="nav">
-    <div class="brand"><img src="/logo.png" alt="DALVORA"></div>
-    <div id="navActions" class="nav-actions"></div>
+  <div class="brand">
+    <img src="/logo.png" alt="DALVORA">
   </div>
-  <section class="hero"><div class="muted">KOREAN DRINK • FRESH BEVERAGE</div><h1>Lebih dari sekadar minuman.</h1><p class="muted">Pesan langsung melalui DALVORA.</p></section>
+</div>
+
+<section class="hero">
+  <div class="muted hero-tag">
+    <span></span>
+    KOREAN DRINK • FRESH BEVERAGE
+    <span></span>
+  </div>
+
+  <h1>
+    <em>Lebih dari sekadar</em>
+    <strong>minuman.</strong>
+  </h1>
+
+  <p class="hero-sub">
+    Pesan langsung melalui <b>DALVORA</b>
+  </p>
+
+  <div id="navActions" class="nav-actions"></div>
+</section>
+
+<section class="category-section">
   <h2>Menu</h2>
-  <div class="grid" id="products"><p class="muted">Memuat menu...</p></div>
+
+  <div class="category-grid">
+
+    <button class="category-card" type="button" onclick="showCategory('milk')">
+      <div class="category-image" id="catMilk">🥤</div>
+      <div class="category-name">Milk<br>Series</div>
+      <div class="category-arrow">›</div>
+    </button>
+
+    <button class="category-card" type="button" onclick="showCategory('chocolate')">
+      <div class="category-image" id="catChocolate">🍫</div>
+      <div class="category-name">Chocolate<br>Series</div>
+      <div class="category-arrow">›</div>
+    </button>
+
+    <button class="category-card" type="button" onclick="showCategory('tea')">
+      <div class="category-image" id="catTea">🍊</div>
+      <div class="category-name">Fresh<br>Tea Series</div>
+      <div class="category-arrow">›</div>
+    </button>
+
+    <button class="category-card" type="button" onclick="showCategory('snack')">
+      <div class="category-image" id="catSnack">🍪</div>
+      <div class="category-name">Snack<br>&amp; Others</div>
+      <div class="category-arrow">›</div>
+    </button>
+
+  </div>
+</section>
+
+<div class="grid" id="products" style="display:none"><p class="muted">Memuat menu...</p></div>
   <div class="box" id="storeContact">
 <b>📱 Pesan langsung di DALVORA</b>
 <p class="muted">Login → pilih menu → checkout → bayar QRIS melalui Midtrans.</p>
@@ -111,11 +838,90 @@ async function load(){
     const r=await fetch('/api/products',{cache:'no-store'});
     const data=await r.json();
     if(!r.ok) throw new Error(data.error||'Gagal memuat menu');
-    products=Array.isArray(data)?data:[];
-    $('products').innerHTML=products.length?products.map(p=>`<div class="card"><div class="emoji">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}">`:escapeHtml(p.emoji)}</div><h3>${escapeHtml(p.name)}</h3><p class="muted">${escapeHtml(p.description)}</p><div class="row"><b class="price">${rp(p.price)}</b><div style="display:flex;gap:6px;align-items:center"><button type="button" class="btn" onclick="change(${Number(p.id)},-1)">−</button><b id="q-${Number(p.id)}">${Number(cartData[String(p.id)]||0)}</b><button type="button" class="btn" onclick="change(${Number(p.id)},1)">+</button></div></div></div>`).join(''):'<p class="muted">Menu belum tersedia.</p>';
+    products=Array.isArray(data)?data:[]; refreshCategoryImages();
+    $('products').innerHTML=''; $('products').style.display='none';
     cleanCart();update();
   }catch(e){$('products').innerHTML=`<div class="box"><b>Menu gagal dimuat.</b><p class="muted">${escapeHtml(e.message)}</p><button type="button" class="btn" onclick="load()">Coba lagi</button></div>`}
 }
+
+function categoryMatch(type,p){
+  const n=(p.name||'').toLowerCase();
+
+  if(type==='milk')
+    return n.includes('coconutshake');
+
+  if(type==='chocolate')
+    return n.includes('choco') || n.includes('coklat');
+
+  if(type==='tea')
+    return n.includes('tea') || n.includes('lemonade') || n.includes('orange');
+
+  return !n.includes('coconutshake') &&
+         !n.includes('choco') &&
+         !n.includes('coklat') &&
+         !n.includes('tea') &&
+         !n.includes('lemonade');
+}
+
+function categoryImage(type){
+  const found=products.find(p=>categoryMatch(type,p) && p.image);
+
+  if(found){
+    return `<img src="${escapeHtml(found.image)}" alt="">`;
+  }
+
+  const fallback={
+    milk:'🥤',
+    chocolate:'🍫',
+    tea:'🍊',
+    snack:'🍪'
+  };
+
+  return fallback[type]||'🥤';
+}
+
+function refreshCategoryImages(){
+  const map={
+    milk:'catMilk',
+    chocolate:'catChocolate',
+    tea:'catTea',
+    snack:'catSnack'
+  };
+
+  for(const type of Object.keys(map)){
+    const el=$(map[type]);
+    if(el) el.innerHTML=categoryImage(type);
+  }
+}
+
+function showCategory(type){
+  const list=products.filter(p=>categoryMatch(type,p));
+  const box=$('products');
+
+  box.style.display='grid';
+
+  box.innerHTML=list.length
+    ? list.map(p=>`<div class="card">
+        <div class="emoji">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}">`:escapeHtml(p.emoji)}</div>
+        <h3>${escapeHtml(p.name)}</h3>
+        <p class="muted">${escapeHtml(p.description)}</p>
+        <div class="row">
+          <b class="price">${rp(p.price)}</b>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button type="button" class="btn" onclick="change(${Number(p.id)},-1)">−</button>
+            <b id="q-${Number(p.id)}">${Number(cartData[String(p.id)]||0)}</b>
+            <button type="button" class="btn" onclick="change(${Number(p.id)},1)">+</button>
+          </div>
+        </div>
+      </div>`).join('')
+    : '<p class="muted">Produk belum tersedia.</p>';
+
+  cleanCart();
+  update();
+
+  box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function cleanCart(){const valid=new Set(products.map(p=>String(p.id)));for(const id of Object.keys(cartData)){if(!valid.has(id)||Number(cartData[id])<=0)delete cartData[id]}localStorage.setItem('dv_cart',JSON.stringify(cartData))}
 function change(id,delta){
   id=String(id);
